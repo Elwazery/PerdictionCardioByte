@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import joblib
 import numpy as np
-from preprocess import preprocess_input_data
 
 # Load model and preprocessing objects
 model = joblib.load("xgb_model.pkl")
@@ -11,71 +10,107 @@ km_male = joblib.load("km_male.pkl")
 km_female = joblib.load("km_female.pkl")
 clipping_bounds = joblib.load("clipping_bounds.pkl")
 
-# Page config
-st.set_page_config(page_title="Heart Disease Predictor", page_icon="❤️", layout="wide")
+# Import preprocessing function
+from preprocess import preprocess_input_data
 
-# Custom CSS styling
-st.markdown("""
-<style>
-    .stApp { background-color: white; }
+st.set_page_config(page_title="Heart Disease Predictor", page_icon="❤️", layout="centered")
 
-    .stButton>button {
-        background-color: #FF0000;
-        color: white;
-        padding: 10px 20px;
-        font-size: 16px;
-        border-radius: 8px;
-    }
+# Styling
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #FFFFFF;
+        }
+        .sidebar .sidebar-content {
+            background-color: #2E2E2E;
+            color: white;
+        }
+        .sidebar .sidebar-content .stRadio label {
+            color: white;
+        }
+        .sidebar .sidebar-content .stRadio [type="radio"]:checked + span {
+            background-color: #FF0000;
+            color: white;
+        }
+        .stNumberInput input, .stSelectbox div {
+            background-color: #F0F0F0;
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+            padding: 5px;
+            color: #333333;
+        }
+        .stButton>button {
+            background-color: #FF0000;
+            color: white;
+            border-radius: 5px;
+            padding: 5px 15px;
+        }
+        .stSuccess {
+            background-color: #D4EDDA;
+            color: #155724;
+            border: 1px solid #C3E6CB;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .stError {
+            background-color: #F8D7DA;
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .css-1cpxx8g { /* Close button styling */
+            color: #FF0000;
+            font-size: 20px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-    h2, h4, .stNumberInput label, .stSelectbox label {
-        color: black !important;
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Sidebar
-st.sidebar.title("🩺 Multiple Disease Prediction System")
+# Sidebar navigation with close button
+st.sidebar.title("Multiple Disease Prediction System")
+st.sidebar.markdown('<a href="#" class="css-1cpxx8g">×</a>', unsafe_allow_html=True)
 pages = {
     "Diabetes Prediction": "diabetes",
     "Heart Disease Prediction": "heart"
 }
-choice = st.sidebar.radio("", list(pages.keys()), index=1)
-
+choice = st.sidebar.radio("", list(pages.keys()), index=1, format_func=lambda x: f"{'❤️' if x == 'Heart Disease Prediction' else ''} {x}")
 if choice != "Heart Disease Prediction":
-    st.sidebar.warning("This demo is currently for Heart Disease Prediction only.")
+    st.sidebar.warning("This app is currently set for Heart Disease Prediction.")
     st.stop()
 
-# Main title
-st.markdown("<h2>❤️ Heart Disease Prediction using Machine Learning</h2>", unsafe_allow_html=True)
-st.markdown("<hr>", unsafe_allow_html=True)
+# Main content
+st.title("❤️ Heart Disease Prediction using ML")
+st.markdown("Enter your medical details to predict your risk of cardiovascular disease.")
 
-# Form inputs
-col1, col2, col3 = st.columns(3)
+# Form inputs in two columns
+col1, col2 = st.columns(2)
 
 with col1:
-    age_years = st.number_input("Age (in years)", min_value=1, max_value=120)
+    age_years = st.number_input("Age (in years)", min_value=1, max_value=100, value=30)
+    age = age_years * 365
     gender = st.selectbox("Gender", options={"1": "Female", "2": "Male"})
-    cholesterol = st.selectbox("Cholesterol level", options={"1": "Normal", "2": "Above normal", "3": "High"})
+    height = st.number_input("Height (cm)", min_value=100, max_value=250, value=170)
 
 with col2:
-    height = st.number_input("Height (cm)", min_value=100, max_value=250)
-    ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=80, max_value=250)
-    gluc = st.selectbox("Glucose level", options={"1": "Normal", "2": "Above normal", "3": "High"})
+    weight = st.number_input("Weight (kg)", min_value=30, max_value=200, value=70)
+    ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=80, max_value=250, value=120)
+    ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=40, max_value=150, value=80)
+
+col3, col4 = st.columns(2)
 
 with col3:
-    weight = st.number_input("Weight (kg)", min_value=30, max_value=200)
-    ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=40, max_value=150)
+    cholesterol = st.selectbox("Cholesterol level", options={"1": "Normal", "2": "Above normal", "3": "High"})
+    gluc = st.selectbox("Glucose level", options={"1": "Normal", "2": "Above normal", "3": "High"})
     smoke = st.selectbox("Do you smoke?", options={0: "No", 1: "Yes"})
 
-col4, col5 = st.columns(2)
 with col4:
     active = st.selectbox("Are you physically active?", options={0: "No", 1: "Yes"})
 
 # Predict button
-if st.button("🔍 Predict Heart Disease", use_container_width=True):
-    age = age_years * 365
-
+if st.button("🔍 Heart Disease Test Result"):
     input_data = pd.DataFrame([{
         'age': age,
         'gender': int(gender),
@@ -91,24 +126,16 @@ if st.button("🔍 Predict Heart Disease", use_container_width=True):
 
     # Preprocess
     processed = preprocess_input_data(input_data, label_encoders, km_male, km_female, clipping_bounds)
+
+    # Predict
     probability = model.predict_proba(processed)[0][1]
-    risk_percent = probability * 100
+    prediction = model.predict(processed)[0]
 
-    # Result
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h4 style='color: black;'>🩺 Prediction Result:</h4>", unsafe_allow_html=True)
-
-    if risk_percent >= 50:
-        st.markdown(f"""
-            <div style='background-color: #f8d7da; padding: 15px; border-radius: 10px; color: black; font-size: 16px;'>
-                ⚠️ <strong>The person is likely to have heart disease.</strong><br><br>
-                Estimated risk: <strong>{risk_percent:.2f}%</strong>
-            </div>
-        """, unsafe_allow_html=True)
+    # Output
+    st.markdown("---")
+    st.subheader("🩺 Prediction Result:")
+    st.write(f"🔬 Estimated risk of heart disease: **{probability * 100:.2f}%**")
+    if prediction == 1:
+        st.error("⚠️ Potential risk of cardiovascular disease. Please consult a medical professional.")
     else:
-        st.markdown(f"""
-            <div style='background-color: #d4edda; padding: 15px; border-radius: 10px; color: black; font-size: 16px;'>
-                ✅ <strong>The person is not likely to have heart disease.</strong><br><br>
-                Estimated risk: <strong>{risk_percent:.2f}%</strong>
-            </div>
-        """, unsafe_allow_html=True)
+        st.success("✅ Low predicted risk. Stay healthy!")
