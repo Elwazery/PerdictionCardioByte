@@ -80,6 +80,26 @@ st.markdown(
             max-width: 100%;
             padding: 0 20px;
         }
+        .stSelectbox div[role="combobox"] {
+            background-color: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 5px;
+        }
+        .stSelectbox div[role="listbox"] {
+            background-color: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 5px;
+        }
+        .stSelectbox div[role="option"] {
+            color: #FFFFFF;
+            background-color: #2A2A2A;
+        }
+        .stSelectbox div[role="option"]:hover {
+            background-color: #3A3A3A;
+        }
+        .stSelectbox div[role="option"][aria-selected="true"] {
+            background-color: #3A3A3A;
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -119,7 +139,7 @@ col1, col2 = st.columns(2)
 with col1:
     age_years = st.number_input("Age (in years)", min_value=1, max_value=100, value=30)
     age = age_years * 365
-    gender = st.radio("Gender", options=["Female", "Male"])
+    gender = st.selectbox("Gender", options=["Female", "Male"])
     height = st.number_input("Height (cm)", min_value=100, max_value=250, value=170)
 
 with col2:
@@ -130,12 +150,12 @@ with col2:
 col3, col4 = st.columns(2)
 
 with col3:
-    cholesterol = st.radio("Cholesterol level", options=["Normal", "Above normal", "High"])
-    gluc = st.radio("Glucose level", options=["Normal", "Above normal", "High"])
-    smoke = st.radio("Do you smoke?", options=["No", "Yes"])
+    cholesterol = st.selectbox("Cholesterol level", options=["Normal", "Above normal", "High"])
+    gluc = st.selectbox("Glucose level", options=["Normal", "Above normal", "High"])
+    smoke = st.selectbox("Do you smoke?", options=["No", "Yes"])
 
 with col4:
-    active = st.radio("Are you physically active?", options=["No", "Yes"])
+    active = st.selectbox("Are you physically active?", options=["No", "Yes"])
 
 # Predict button
 if st.button("🔍 Heart Disease Test Result"):
