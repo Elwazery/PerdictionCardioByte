@@ -13,18 +13,19 @@ clipping_bounds = joblib.load("clipping_bounds.pkl")
 # Import preprocessing function
 from preprocess import preprocess_input_data
 
-st.set_page_config(page_title="Heart Disease Predictor", page_icon="❤️", layout="centered")
+# Set page configuration
+st.set_page_config(page_title="Heart Disease Predictor", page_icon="❤️", layout="wide")
 
-# Styling
+# Custom CSS to match the design
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #1C2526;
+            background-color: #1A1A1A;
             color: #FFFFFF;
         }
         .sidebar .sidebar-content {
-            background-color: #1C2526;
+            background-color: #1A1A1A;
             color: #FFFFFF;
         }
         .sidebar .stRadio label {
@@ -35,7 +36,7 @@ st.markdown(
             color: #FFFFFF;
         }
         .stNumberInput input, .stSelectbox div {
-            background-color: #2D2D2D;
+            background-color: #2A2A2A;
             border: 1px solid #3A3A3A;
             border-radius: 5px;
             padding: 8px;
@@ -49,8 +50,12 @@ st.markdown(
             font-size: 16px;
             border: none;
         }
+        .stButton:nth-child(2)>button {
+            background-color: #1A1A1A;
+            border: 1px solid #FFFFFF;
+        }
         .stSuccess {
-            background-color: #228B22;
+            background-color: #006400;
             color: #FFFFFF;
             border: 1px solid #2E8B57;
             padding: 12px;
@@ -66,20 +71,22 @@ st.markdown(
             text-align: center;
         }
         .css-1cpxx8g { /* Close button styling */
-            color: #FF4040;
-            font-size: 20px;
+            display: none;
         }
         .stMarkdown {
             color: #FFFFFF;
+        }
+        .css-1aumxbw { /* Adjust layout for centered content */
+            max-width: 100%;
+            padding: 0 20px;
         }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Sidebar navigation with close button
+# Sidebar navigation
 st.sidebar.title("Multiple Disease Prediction System")
-st.sidebar.markdown('<a href="#" class="css-1cpxx8g">×</a>', unsafe_allow_html=True)
 pages = {
     "Diabetes Prediction": "diabetes",
     "Heart Disease Prediction": "heart",
@@ -160,3 +167,26 @@ if st.button("🔍 Heart Disease Test Result"):
         st.error("Potential risk of cardiovascular disease. Please consult a medical professional.")
     else:
         st.success("Low predicted risk. Stay healthy!")
+
+# Camera button (simulated)
+st.markdown(
+    """
+    <button class="camera-btn" onclick="alert('Camera feature not implemented')">📷</button>
+    <style>
+        .camera-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #000000;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
