@@ -20,48 +20,52 @@ st.markdown(
     """
     <style>
         .stApp {
-            background-color: #FFFFFF;
+            background-color: #F9F9F9;
         }
         .sidebar .sidebar-content {
             background-color: #2E2E2E;
-            color: white;
+            color: #333333; /* Changed from white to black */
         }
-        .sidebar .sidebar-content .stRadio label {
-            color: white;
+        .sidebar .stRadio label {
+            color: #333333; /* Changed from white to black */
         }
-        .sidebar .sidebar-content .stRadio [type="radio"]:checked + span {
-            background-color: #FF0000;
-            color: white;
+        .sidebar .stRadio [type="radio"]:checked + span {
+            background-color: #FF4040;
+            color: #333333; /* Changed from white to black */
         }
         .stNumberInput input, .stSelectbox div {
-            background-color: #F0F0F0;
-            border: 1px solid #CCCCCC;
-            border-radius: 4px;
-            padding: 5px;
-            color: #333333;
+            background-color: #FFFFFF;
+            border: 1px solid #D3D3D3;
+            border-radius: 5px;
+            padding: 8px;
+            color: #333333; /* Ensured text is black */
         }
         .stButton>button {
-            background-color: #FF0000;
-            color: white;
-            border-radius: 5px;
-            padding: 5px 15px;
+            background-color: #FF4040;
+            color: #333333; /* Changed from white to black */
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
         }
         .stSuccess {
-            background-color: #D4EDDA;
-            color: #155724;
-            border: 1px solid #C3E6CB;
-            padding: 10px;
-            border-radius: 5px;
+            background-color: #E6F3E6;
+            color: #2F4F2F;
+            border: 1px solid #C1E1C1;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
         }
         .stError {
-            background-color: #F8D7DA;
-            color: #721C24;
-            border: 1px solid #F5C6CB;
-            padding: 10px;
-            border-radius: 5px;
+            background-color: #FAD2D2;
+            color: #8B0000;
+            border: 1px solid #F4C2C2;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
         }
         .css-1cpxx8g { /* Close button styling */
-            color: #FF0000;
+            color: #FF4040;
             font-size: 20px;
         }
     </style>
