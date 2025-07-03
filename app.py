@@ -70,67 +70,71 @@ model, label_encoders, km_male, km_female, clipping_bounds = load_models()
 with st.form("manual_input_form"):
     col1, col2 = st.columns(2)
     with col1:
-        age_years = st.number_input("Age (in years)", min_value=1, max_value=120, value=50)
+        age_years = st.number_input("Age (in years)", min_value=1, max_value=120, step=1, value=None)
     with col2:
-        gender = st.selectbox("Gender", ["Female", "Male"])
+        gender = st.selectbox("Gender", ["", "Female", "Male"])
 
     col3, col4 = st.columns(2)
     with col3:
-        height = st.number_input("Height (in cm)", min_value=100, max_value=250, value=170)
+        height = st.number_input("Height (in cm)", min_value=100, max_value=250, step=1, value=None)
     with col4:
-        weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, value=70.0)
+        weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, step=0.1, value=None)
 
     col5, col6 = st.columns(2)
     with col5:
-        ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, value=120)
+        ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, step=1, value=None)
     with col6:
-        ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, value=80)
+        ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, step=1, value=None)
 
     col7, col8 = st.columns(2)
     with col7:
-        cholesterol = st.selectbox("Cholesterol Level", ["Normal", "Above Normal", "Well Above Normal"])
+        cholesterol = st.selectbox("Cholesterol Level", ["", "Normal", "Above Normal", "Well Above Normal"])
     with col8:
-        gluc = st.selectbox("Glucose Level", ["Normal", "Above Normal", "Well Above Normal"])
+        gluc = st.selectbox("Glucose Level", ["", "Normal", "Above Normal", "Well Above Normal"])
 
     col9, col10 = st.columns(2)
     with col9:
-        smoke = st.selectbox("Smoker", ["No", "Yes"])
+        smoke = st.selectbox("Smoker", ["", "No", "Yes"])
     with col10:
-        active = st.selectbox("Physically Active", ["Yes", "No"])
+        active = st.selectbox("Physically Active", ["", "Yes", "No"])
 
     submitted = st.form_submit_button("Predict")
 
     if submitted:
-        cholesterol_map = {"Normal": "1", "Above Normal": "2", "Well Above Normal": "3"}
-        gluc_map = cholesterol_map
-        smoke_map = {"No": "0", "Yes": "1"}
-        active_map = {"Yes": "1", "No": "0"}
+        if None in [age_years, height, weight, ap_hi, ap_lo] or \
+           "" in [gender, cholesterol, gluc, smoke, active]:
+            st.warning("⚠️ Please complete all fields before predicting.")
+        else:
+            cholesterol_map = {"Normal": "1", "Above Normal": "2", "Well Above Normal": "3"}
+            gluc_map = cholesterol_map
+            smoke_map = {"No": "0", "Yes": "1"}
+            active_map = {"Yes": "1", "No": "0"}
 
-        input_data = {
-            'age_years': age_years,
-            'gender': '2' if gender == "Male" else '1',
-            'height': height,
-            'weight': weight,
-            'ap_hi': ap_hi,
-            'ap_lo': ap_lo,
-            'cholesterol': cholesterol_map[cholesterol],
-            'gluc': gluc_map[gluc],
-            'smoke': smoke_map[smoke],
-            'active': active_map[active]
-        }
+            input_data = {
+                'age_years': age_years,
+                'gender': '2' if gender == "Male" else '1',
+                'height': height,
+                'weight': weight,
+                'ap_hi': ap_hi,
+                'ap_lo': ap_lo,
+                'cholesterol': cholesterol_map[cholesterol],
+                'gluc': gluc_map[gluc],
+                'smoke': smoke_map[smoke],
+                'active': active_map[active]
+            }
 
-        try:
-            processed_input = preprocess_manual_input(input_data, label_encoders, km_male, km_female, clipping_bounds)
-            prediction = model.predict(processed_input)[0]
-            probability = model.predict_proba(processed_input)[0][1]
+            try:
+                processed_input = preprocess_manual_input(input_data, label_encoders, km_male, km_female, clipping_bounds)
+                prediction = model.predict(processed_input)[0]
+                probability = model.predict_proba(processed_input)[0][1]
 
-            st.subheader("📊 Prediction Result")
-            if prediction == 1:
-                st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
-            else:
-                st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
-        except Exception as e:
-            st.error(f"An error occurred during prediction: {e}")
+                st.subheader("📊 Prediction Result")
+                if prediction == 1:
+                    st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+                else:
+                    st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+            except Exception as e:
+                st.error(f"An error occurred during prediction: {e}")
 
 st.markdown("---")
 st.caption("Powered by XGBoost, KModes & Streamlit")
