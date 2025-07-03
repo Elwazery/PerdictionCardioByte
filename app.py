@@ -14,12 +14,11 @@ clipping_bounds = joblib.load("clipping_bounds.pkl")
 # Page config
 st.set_page_config(page_title="Heart Disease Predictor", page_icon="❤️", layout="wide")
 
-# Custom styling
+# Custom CSS styling
 st.markdown("""
 <style>
     .stApp { background-color: white; }
 
-    /* Red button */
     .stButton>button {
         background-color: #FF0000;
         color: white;
@@ -28,14 +27,7 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    /* Main title */
-    h2 {
-        color: black !important;
-        text-align: center;
-    }
-
-    /* Label styling (field headers) */
-    .stNumberInput label, .stSelectbox label {
+    h2, h4, .stNumberInput label, .stSelectbox label {
         color: black !important;
         font-weight: bold;
     }
@@ -58,7 +50,7 @@ if choice != "Heart Disease Prediction":
 st.markdown("<h2>❤️ Heart Disease Prediction using Machine Learning</h2>", unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
 
-# Input layout
+# Form inputs
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -96,15 +88,26 @@ if st.button("🔍 Predict Heart Disease", use_container_width=True):
         'active': int(active)
     }])
 
-    # Preprocessing
+    # Preprocess
     processed = preprocess_input_data(input_data, label_encoders, km_male, km_female, clipping_bounds)
     probability = model.predict_proba(processed)[0][1]
     prediction = model.predict(processed)[0]
 
-    # Result output
+    # Result section
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.subheader("🩺 Prediction Result:")
+    st.markdown("<h4 style='color: black;'>🩺 Prediction Result:</h4>", unsafe_allow_html=True)
+
     if prediction == 1:
-        st.error(f"⚠️ The person is **likely to have heart disease**.\n\nEstimated risk: **{probability * 100:.2f}%**")
+        st.markdown(f"""
+            <div style='background-color: #f8d7da; padding: 15px; border-radius: 10px; color: black; font-size: 16px;'>
+                ⚠️ The person is <strong>likely to have heart disease</strong>.<br><br>
+                Estimated risk: <strong>{probability * 100:.2f}%</strong>
+            </div>
+        """, unsafe_allow_html=True)
     else:
-        st.success(f"✅ The person is **not likely to have heart disease**.\n\nEstimated risk: **{(1 - probability) * 100:.2f}%**")
+        st.markdown(f"""
+            <div style='background-color: #d4edda; padding: 15px; border-radius: 10px; color: black; font-size: 16px;'>
+                ✅ The person is <strong>not likely to have heart disease</strong>.<br><br>
+                Estimated risk: <strong>{(1 - probability) * 100:.2f}%</strong>
+            </div>
+        """, unsafe_allow_html=True)
