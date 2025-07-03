@@ -17,7 +17,7 @@ def load_models():
 def preprocess_manual_input(data, label_encoders, km_male, km_female, clipping_bounds):
     df = pd.DataFrame([data])
 
-    # Convert age in years to days
+    # Convert age in years to days for compatibility, but keep 'years'
     df['age'] = df['age_years'] * 365
     df['years'] = df['age_years']
     df = df.drop(columns=['age_years'], errors='ignore')
@@ -116,9 +116,9 @@ with st.form("manual_input_form"):
 
             st.subheader("📊 Prediction Result")
             if prediction == 1:
-                st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability:.2f}")
+                st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
             else:
-                st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability:.2f}")
+                st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
 
         except Exception as e:
             st.error(f"An error occurred during prediction: {e}")
