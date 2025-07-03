@@ -16,82 +16,92 @@ def load_models():
 # Preprocessing function
 def preprocess_manual_input(data, label_encoders, km_male, km_female, clipping_bounds):
     df = pd.DataFrame([data])
-
-    # Convert age in years to days for compatibility, but keep 'years'
     df['age'] = df['age_years'] * 365
     df['years'] = df['age_years']
     df = df.drop(columns=['age_years'], errors='ignore')
 
-    # Derived features
     df['bmi'] = df['weight'] / (df['height'] / 100) ** 2
     df['MAP'] = (df['ap_hi'] + 2 * df['ap_lo']) / 3
 
-    # Binning
-    df['age_bin'] = pd.cut(df['years'], bins=[0, 30, 40, 50, 60, 100], labels=['<30', '30-40', '40-50', '50-60', '60+'], include_lowest=True)
-    df['BMI_Class'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 30, 100], labels=['Underweight', 'Normal', 'Overweight', 'Obese'], include_lowest=True)
-    df['MAP_Class'] = pd.cut(df['MAP'], bins=[0, 80, 100, 120, 1000], labels=['Low', 'Normal', 'High', 'Very High'], include_lowest=True)
+    df['age_bin'] = pd.cut(df['years'], bins=[0, 30, 40, 50, 60, 100],
+                           labels=['<30', '30-40', '40-50', '50-60', '60+'], include_lowest=True)
+    df['BMI_Class'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 30, 100],
+                             labels=['Underweight', 'Normal', 'Overweight', 'Obese'], include_lowest=True)
+    df['MAP_Class'] = pd.cut(df['MAP'], bins=[0, 80, 100, 120, 1000],
+                             labels=['Low', 'Normal', 'High', 'Very High'], include_lowest=True)
 
-    # Clip outliers
     for col in clipping_bounds:
         df[col] = df[col].clip(lower=clipping_bounds[col]['lower'], upper=clipping_bounds[col]['upper'])
 
-    # Recalculate after clipping
     df['bmi'] = df['weight'] / (df['height'] / 100) ** 2
     df['MAP'] = (df['ap_hi'] + 2 * df['ap_lo']) / 3
-    df['BMI_Class'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 30, 100], labels=['Underweight', 'Normal', 'Overweight', 'Obese'], include_lowest=True)
-    df['MAP_Class'] = pd.cut(df['MAP'], bins=[0, 80, 100, 120, 1000], labels=['Low', 'Normal', 'High', 'Very High'], include_lowest=True)
+    df['BMI_Class'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 30, 100],
+                             labels=['Underweight', 'Normal', 'Overweight', 'Obese'], include_lowest=True)
+    df['MAP_Class'] = pd.cut(df['MAP'], bins=[0, 80, 100, 120, 1000],
+                             labels=['Low', 'Normal', 'High', 'Very High'], include_lowest=True)
 
-    # Encode categorical columns
-    categorical_columns = ['gender', 'cholesterol', 'gluc', 'smoke', 'active', 'age_bin', 'BMI_Class', 'MAP_Class']
+    categorical_columns = ['gender', 'cholesterol', 'gluc', 'smoke', 'active',
+                           'age_bin', 'BMI_Class', 'MAP_Class']
     for col in categorical_columns:
         df[col] = label_encoders[col].transform(df[col].astype(str))
 
-    # Apply KModes clustering
     df['Cluster'] = np.nan
     is_male = df['gender'].values[0] == label_encoders['gender'].transform(['2'])[0]
-    columns_for_clustering = ['gender', 'cholesterol', 'gluc', 'smoke', 'active', 'age_bin', 'BMI_Class', 'MAP_Class']
+    cluster_cols = ['gender', 'cholesterol', 'gluc', 'smoke', 'active',
+                    'age_bin', 'BMI_Class', 'MAP_Class']
     if is_male:
-        df['Cluster'] = km_male.predict(df[columns_for_clustering])
+        df['Cluster'] = km_male.predict(df[cluster_cols])
     else:
-        df['Cluster'] = km_female.predict(df[columns_for_clustering])
+        df['Cluster'] = km_female.predict(df[cluster_cols])
 
-    # Final feature list
     features = ['years', 'gender', 'height', 'weight', 'ap_hi', 'ap_lo',
                 'cholesterol', 'gluc', 'smoke', 'active', 'bmi', 'MAP',
                 'age_bin', 'BMI_Class', 'MAP_Class', 'Cluster']
     return df[features]
 
-# --------------------- Streamlit App --------------------- #
+# Streamlit App
 st.set_page_config(page_title="Cardio Risk Predictor", layout="centered")
 
 st.title("🫀 Cardiovascular Risk Prediction")
 st.markdown("Fill in the fields below to predict the risk of cardiovascular disease.")
 
-# Load models
 model, label_encoders, km_male, km_female, clipping_bounds = load_models()
 
 with st.form("manual_input_form"):
-    age_years = st.number_input("Age (in years)", min_value=1, max_value=120, value=50)
-    gender = st.selectbox("Gender", ["Female", "Male"])
-    height = st.number_input("Height (in cm)", min_value=100, max_value=250, value=170)
-    weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, value=70.0)
-    ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, value=120)
-    ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, value=80)
+    col1, col2 = st.columns(2)
+    with col1:
+        age_years = st.number_input("Age (in years)", min_value=1, max_value=120, value=50)
+    with col2:
+        gender = st.selectbox("Gender", ["Female", "Male"])
 
-    cholesterol = st.selectbox("Cholesterol Level", ["Normal", "Above Normal", "Well Above Normal"])
-    gluc = st.selectbox("Glucose Level", ["Normal", "Above Normal", "Well Above Normal"])
-    smoke = st.selectbox("Smoker", ["No", "Yes"])
-    active = st.selectbox("Physically Active", ["Yes", "No"])
+    col3, col4 = st.columns(2)
+    with col3:
+        height = st.number_input("Height (in cm)", min_value=100, max_value=250, value=170)
+    with col4:
+        weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, value=70.0)
+
+    col5, col6 = st.columns(2)
+    with col5:
+        ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, value=120)
+    with col6:
+        ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, value=80)
+
+    col7, col8 = st.columns(2)
+    with col7:
+        cholesterol = st.selectbox("Cholesterol Level", ["Normal", "Above Normal", "Well Above Normal"])
+    with col8:
+        gluc = st.selectbox("Glucose Level", ["Normal", "Above Normal", "Well Above Normal"])
+
+    col9, col10 = st.columns(2)
+    with col9:
+        smoke = st.selectbox("Smoker", ["No", "Yes"])
+    with col10:
+        active = st.selectbox("Physically Active", ["Yes", "No"])
 
     submitted = st.form_submit_button("Predict")
 
     if submitted:
-        # Mapping input values to encoded values
-        cholesterol_map = {
-            "Normal": "1",
-            "Above Normal": "2",
-            "Well Above Normal": "3"
-        }
+        cholesterol_map = {"Normal": "1", "Above Normal": "2", "Well Above Normal": "3"}
         gluc_map = cholesterol_map
         smoke_map = {"No": "0", "Yes": "1"}
         active_map = {"Yes": "1", "No": "0"}
@@ -119,7 +129,6 @@ with st.form("manual_input_form"):
                 st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
             else:
                 st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
-
         except Exception as e:
             st.error(f"An error occurred during prediction: {e}")
 
