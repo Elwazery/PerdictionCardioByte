@@ -20,46 +20,47 @@ st.markdown(
     """
     <style>
         .stApp {
-            background-color: #F9F9F9;
+            background-color: #1C2526;
+            color: #FFFFFF;
         }
         .sidebar .sidebar-content {
-            background-color: #2E2E2E;
-            color: #333333; /* Changed from white to black */
+            background-color: #1C2526;
+            color: #FFFFFF;
         }
         .sidebar .stRadio label {
-            color: #333333; /* Changed from white to black */
+            color: #FFFFFF;
         }
         .sidebar .stRadio [type="radio"]:checked + span {
             background-color: #FF4040;
-            color: #333333; /* Changed from white to black */
+            color: #FFFFFF;
         }
         .stNumberInput input, .stSelectbox div {
-            background-color: #FFFFFF;
-            border: 1px solid #D3D3D3;
+            background-color: #2D2D2D;
+            border: 1px solid #3A3A3A;
             border-radius: 5px;
             padding: 8px;
-            color: #333333; /* Ensured text is black */
+            color: #FFFFFF;
         }
         .stButton>button {
             background-color: #FF4040;
-            color: #333333; /* Changed from white to black */
+            color: #FFFFFF;
             border-radius: 10px;
             padding: 10px 20px;
             font-size: 16px;
             border: none;
         }
         .stSuccess {
-            background-color: #E6F3E6;
-            color: #2F4F2F;
-            border: 1px solid #C1E1C1;
+            background-color: #228B22;
+            color: #FFFFFF;
+            border: 1px solid #2E8B57;
             padding: 12px;
             border-radius: 8px;
             text-align: center;
         }
         .stError {
-            background-color: #FAD2D2;
-            color: #8B0000;
-            border: 1px solid #F4C2C2;
+            background-color: #8B0000;
+            color: #FFFFFF;
+            border: 1px solid #B22222;
             padding: 12px;
             border-radius: 8px;
             text-align: center;
@@ -67,6 +68,9 @@ st.markdown(
         .css-1cpxx8g { /* Close button styling */
             color: #FF4040;
             font-size: 20px;
+        }
+        .stMarkdown {
+            color: #FFFFFF;
         }
     </style>
     """,
@@ -78,7 +82,8 @@ st.sidebar.title("Multiple Disease Prediction System")
 st.sidebar.markdown('<a href="#" class="css-1cpxx8g">×</a>', unsafe_allow_html=True)
 pages = {
     "Diabetes Prediction": "diabetes",
-    "Heart Disease Prediction": "heart"
+    "Heart Disease Prediction": "heart",
+    "Pneumonia Detection": "pneumonia"
 }
 choice = st.sidebar.radio("", list(pages.keys()), index=1, format_func=lambda x: f"{'❤️' if x == 'Heart Disease Prediction' else ''} {x}")
 if choice != "Heart Disease Prediction":
@@ -88,6 +93,18 @@ if choice != "Heart Disease Prediction":
 # Main content
 st.title("❤️ Heart Disease Prediction using ML")
 st.markdown("Enter your medical details to predict your risk of cardiovascular disease.")
+
+# Navigation buttons at the top
+col_nav = st.columns([1, 1, 1])
+with col_nav[0]:
+    if st.button("🏠 HOME"):
+        st.write("Redirect to Home (not implemented)")
+with col_nav[1]:
+    if st.button("MULTIPLE DISEASE PREDICTION", key="multiple"):
+        st.write("Redirect to Multiple Disease Prediction (not implemented)")
+with col_nav[2]:
+    if st.button("FEEDBACK"):
+        st.write("Redirect to Feedback (not implemented)")
 
 # Form inputs in two columns
 col1, col2 = st.columns(2)
@@ -137,9 +154,9 @@ if st.button("🔍 Heart Disease Test Result"):
 
     # Output
     st.markdown("---")
-    st.subheader("🩺 Prediction Result:")
-    st.write(f"🔬 Estimated risk of heart disease: **{probability * 100:.2f}%**")
+    st.subheader("Prediction Result:")
+    st.write(f"Estimated risk of heart disease: **{probability * 100:.2f}%**")
     if prediction == 1:
-        st.error("⚠️ Potential risk of cardiovascular disease. Please consult a medical professional.")
+        st.error("Potential risk of cardiovascular disease. Please consult a medical professional.")
     else:
-        st.success("✅ Low predicted risk. Stay healthy!")
+        st.success("Low predicted risk. Stay healthy!")
