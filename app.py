@@ -41,6 +41,7 @@ st.markdown(
             border-radius: 5px;
             padding: 8px;
             color: #FFFFFF;
+            box-shadow: none;
         }
         .stButton>button {
             background-color: #FF4040;
@@ -84,15 +85,20 @@ st.markdown(
             background-color: #2A2A2A;
             border: 1px solid #3A3A3A;
             border-radius: 5px;
+            height: 40px;
+            padding: 0 8px;
+            box-shadow: none;
         }
         .stSelectbox div[role="listbox"] {
             background-color: #2A2A2A;
             border: 1px solid #3A3A3A;
             border-radius: 5px;
+            box-shadow: none;
         }
         .stSelectbox div[role="option"] {
             color: #FFFFFF;
             background-color: #2A2A2A;
+            padding: 8px;
         }
         .stSelectbox div[role="option"]:hover {
             background-color: #3A3A3A;
