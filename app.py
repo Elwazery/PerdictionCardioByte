@@ -119,7 +119,7 @@ col1, col2 = st.columns(2)
 with col1:
     age_years = st.number_input("Age (in years)", min_value=1, max_value=100, value=30)
     age = age_years * 365
-    gender = st.selectbox("Gender", options={"1": "Female", "2": "Male"})
+    gender = st.selectbox("Gender", options=["Female", "Male"])  # Simplified options
     height = st.number_input("Height (cm)", min_value=100, max_value=250, value=170)
 
 with col2:
@@ -130,26 +130,26 @@ with col2:
 col3, col4 = st.columns(2)
 
 with col3:
-    cholesterol = st.selectbox("Cholesterol level", options={"1": "Normal", "2": "Above normal", "3": "High"})
-    gluc = st.selectbox("Glucose level", options={"1": "Normal", "2": "Above normal", "3": "High"})
-    smoke = st.selectbox("Do you smoke?", options={0: "No", 1: "Yes"})
+    cholesterol = st.selectbox("Cholesterol level", options=["Normal", "Above normal", "High"])
+    gluc = st.selectbox("Glucose level", options=["Normal", "Above normal", "High"])
+    smoke = st.selectbox("Do you smoke?", options=["No", "Yes"])
 
 with col4:
-    active = st.selectbox("Are you physically active?", options={0: "No", 1: "Yes"})
+    active = st.selectbox("Are you physically active?", options=["No", "Yes"])
 
 # Predict button
 if st.button("🔍 Heart Disease Test Result"):
     input_data = pd.DataFrame([{
         'age': age,
-        'gender': int(gender),
+        'gender': 1 if gender == "Female" else 2,  # Map Female to 1, Male to 2
         'height': height,
         'weight': weight,
         'ap_hi': ap_hi,
         'ap_lo': ap_lo,
-        'cholesterol': int(cholesterol),
-        'gluc': int(gluc),
-        'smoke': int(smoke),
-        'active': int(active)
+        'cholesterol': {"Normal": 1, "Above normal": 2, "High": 3}[cholesterol],
+        'gluc': {"Normal": 1, "Above normal": 2, "High": 3}[gluc],
+        'smoke': 1 if smoke == "Yes" else 0,
+        'active': 1 if active == "Yes" else 0
     }])
 
     # Preprocess
