@@ -23,28 +23,30 @@ st.markdown(
             background-color: white;
         }
         .sidebar .sidebar-content {
-            background-color: #EDEDED;
+            background-color: #2E2E2E; /* Dark background for sidebar */
         }
-        .css-1aumxhk {
-            background-color: #F0F0F0;
-            border: none;
+        .stNumberInput input, .stSelectbox div {
+            background-color: #F0F0F0; /* Light gray background for inputs */
+            border: 1px solid #CCCCCC; /* Visible border */
+            border-radius: 4px;
             padding: 5px;
+            color: #333333; /* Dark text for contrast */
         }
         .stButton>button {
-            background-color: #FF0000;
+            background-color: #FF0000; /* Red button */
             color: white;
             border-radius: 5px;
             padding: 5px 15px;
         }
         .stSuccess {
-            background-color: #D4EDDA;
+            background-color: #D4EDDA; /* Green for success */
             color: #155724;
             border: 1px solid #C3E6CB;
             padding: 10px;
             border-radius: 5px;
         }
         .stError {
-            background-color: #F8D7DA;
+            background-color: #F8D7DA; /* Red for error */
             color: #721C24;
             border: 1px solid #F5C6CB;
             padding: 10px;
@@ -59,8 +61,7 @@ st.markdown(
 st.sidebar.title("Multiple Disease Prediction System")
 pages = {
     "Diabetes Prediction": "diabetes",
-    "Heart Disease Prediction": "heart",
-    "Parkinsons Prediction": "parkinsons"
+    "Heart Disease Prediction": "heart"
 }
 choice = st.sidebar.radio("", list(pages.keys()), index=1, format_func=lambda x: f"{'❤️' if x == 'Heart Disease Prediction' else ''} {x}")
 if choice != "Heart Disease Prediction":
