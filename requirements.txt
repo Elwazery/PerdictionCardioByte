@@ -6,3 +6,4 @@ scikit-learn
 xgboost
 kmodes
 streamlit-option-menu
+pycaret<3.1
