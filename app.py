@@ -7,16 +7,27 @@ from streamlit_option_menu import option_menu
 # Load saved models and encoders
 @st.cache_resource
 def load_models():
-    model_cardio = joblib.load("xgb_model.pkl")
-    label_encoders_cardio = joblib.load("label_encoders.pkl")
-    km_male = joblib.load("km_male.pkl")
-    km_female = joblib.load("km_female.pkl")
-    clipping_bounds = joblib.load("clipping_bounds.pkl")
-    model_diabetes = joblib.load("diabetes_final_model.pkl")  # Add diabetes model
-    return model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes
+    try:
+        model_cardio = joblib.load("xgb_model.pkl")
+        label_encoders_cardio = joblib.load("label_encoders.pkl")
+        km_male = joblib.load("km_male.pkl")
+        km_female = joblib.load("km_female.pkl")
+        clipping_bounds = joblib.load("clipping_bounds.pkl")
+        model_diabetes = joblib.load("diabetes_final_model.pkl")  # Add diabetes model
+        return model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes
+    except FileNotFoundError as e:
+        st.error(f"Error loading models: {e}. Please ensure all model files (xgb_model.pkl, label_encoders.pkl, km_male.pkl, km_female.pkl, clipping_bounds.pkl, diabetes_final_model.pkl) are in the project directory.")
+        return None, None, None, None, None, None
+    except Exception as e:
+        st.error(f"An unexpected error occurred while loading models: {e}")
+        return None, None, None, None, None, None
 
 # Preprocessing function for cardiovascular risk
 def preprocess_manual_input(data, label_encoders, km_male, km_female, clipping_bounds):
+    if any(x is None for x in [label_encoders, km_male, km_female, clipping_bounds]):
+        st.error("Preprocessing failed due to missing models or data. Please check the logs.")
+        return pd.DataFrame()
+    
     df = pd.DataFrame([data])
     df['age'] = df['age_years'] * 365
     df['years'] = df['age_years']
@@ -63,6 +74,10 @@ def preprocess_manual_input(data, label_encoders, km_male, km_female, clipping_b
 
 # Preprocessing function for diabetes risk
 def preprocess_diabetes_input(data, clipping_bounds):
+    if clipping_bounds is None:
+        st.error("Preprocessing failed due to missing clipping bounds. Please check the logs.")
+        return pd.DataFrame()
+    
     df = pd.DataFrame([data])
     df['age_bin'] = pd.cut(df['Age'], bins=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
                            labels=['18-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80+'], include_lowest=True)
@@ -107,135 +122,139 @@ with st.sidebar:
 # Load models
 model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes = load_models()
 
-# Main app logic with navigation
-if selected == "Cardiovascular Risk":
-    st.title("🫀 Cardiovascular Risk Prediction")
-    st.markdown("Fill in the fields below to predict the risk of cardiovascular disease.")
+# Check if models loaded successfully
+if any(x is None for x in [model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes]):
+    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded.")
+else:
+    # Main app logic with navigation
+    if selected == "Cardiovascular Risk":
+        st.title("🫀 Cardiovascular Risk Prediction")
+        st.markdown("Fill in the fields below to predict the risk of cardiovascular disease.")
 
-    with st.form("manual_input_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            age_years = st.number_input("Age (in years)", min_value=1, max_value=120, step=1, value=None)
-        with col2:
-            gender = st.selectbox("Gender", ["", "Female", "Male"])
+        with st.form("manual_input_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                age_years = st.number_input("Age (in years)", min_value=1, max_value=120, step=1, value=None)
+            with col2:
+                gender = st.selectbox("Gender", ["", "Female", "Male"])
 
-        col3, col4 = st.columns(2)
-        with col3:
-            height = st.number_input("Height (in cm)", min_value=100, max_value=250, step=1, value=None)
-        with col4:
-            weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, step=0.1, value=None)
+            col3, col4 = st.columns(2)
+            with col3:
+                height = st.number_input("Height (in cm)", min_value=100, max_value=250, step=1, value=None)
+            with col4:
+                weight = st.number_input("Weight (in kg)", min_value=30.0, max_value=200.0, step=0.1, value=None)
 
-        col5, col6 = st.columns(2)
-        with col5:
-            ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, step=1, value=None)
-        with col6:
-            ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, step=1, value=None)
+            col5, col6 = st.columns(2)
+            with col5:
+                ap_hi = st.number_input("Systolic BP (ap_hi)", min_value=50, max_value=250, step=1, value=None)
+            with col6:
+                ap_lo = st.number_input("Diastolic BP (ap_lo)", min_value=30, max_value=200, step=1, value=None)
 
-        col7, col8 = st.columns(2)
-        with col7:
-            cholesterol = st.selectbox("Cholesterol Level", ["", "Normal", "Above Normal", "Well Above Normal"])
-        with col8:
-            gluc = st.selectbox("Glucose Level", ["", "Normal", "Above Normal", "Well Above Normal"])
+            col7, col8 = st.columns(2)
+            with col7:
+                cholesterol = st.selectbox("Cholesterol Level", ["", "Normal", "Above Normal", "Well Above Normal"])
+            with col8:
+                gluc = st.selectbox("Glucose Level", ["", "Normal", "Above Normal", "Well Above Normal"])
 
-        col9, col10 = st.columns(2)
-        with col9:
-            smoke = st.selectbox("Smoker", ["", "No", "Yes"])
-        with col10:
-            active = st.selectbox("Physically Active", ["", "Yes", "No"])
+            col9, col10 = st.columns(2)
+            with col9:
+                smoke = st.selectbox("Smoker", ["", "No", "Yes"])
+            with col10:
+                active = st.selectbox("Physically Active", ["", "Yes", "No"])
 
-        submitted = st.form_submit_button("Predict")
+            submitted = st.form_submit_button("Predict")
 
-        if submitted:
-            if None in [age_years, height, weight, ap_hi, ap_lo] or \
-               "" in [gender, cholesterol, gluc, smoke, active]:
-                st.warning("⚠️ Please complete all fields before predicting.")
-            else:
-                cholesterol_map = {"Normal": "1", "Above Normal": "2", "Well Above Normal": "3"}
-                gluc_map = cholesterol_map
-                smoke_map = {"No": "0", "Yes": "1"}
-                active_map = {"Yes": "1", "No": "0"}
+            if submitted:
+                if None in [age_years, height, weight, ap_hi, ap_lo] or \
+                   "" in [gender, cholesterol, gluc, smoke, active]:
+                    st.warning("⚠️ Please complete all fields before predicting.")
+                else:
+                    cholesterol_map = {"Normal": "1", "Above Normal": "2", "Well Above Normal": "3"}
+                    gluc_map = cholesterol_map
+                    smoke_map = {"No": "0", "Yes": "1"}
+                    active_map = {"Yes": "1", "No": "0"}
 
-                input_data = {
-                    'age_years': age_years,
-                    'gender': '2' if gender == "Male" else '1',
-                    'height': height,
-                    'weight': weight,
-                    'ap_hi': ap_hi,
-                    'ap_lo': ap_lo,
-                    'cholesterol': cholesterol_map[cholesterol],
-                    'gluc': gluc_map[gluc],
-                    'smoke': smoke_map[smoke],
-                    'active': active_map[active]
-                }
+                    input_data = {
+                        'age_years': age_years,
+                        'gender': '2' if gender == "Male" else '1',
+                        'height': height,
+                        'weight': weight,
+                        'ap_hi': ap_hi,
+                        'ap_lo': ap_lo,
+                        'cholesterol': cholesterol_map[cholesterol],
+                        'gluc': gluc_map[gluc],
+                        'smoke': smoke_map[smoke],
+                        'active': active_map[active]
+                    }
 
-                try:
-                    processed_input = preprocess_manual_input(input_data, label_encoders_cardio, km_male, km_female, clipping_bounds)
-                    prediction = model_cardio.predict(processed_input)[0]
-                    probability = model_cardio.predict_proba(processed_input)[0][1]
+                    try:
+                        processed_input = preprocess_manual_input(input_data, label_encoders_cardio, km_male, km_female, clipping_bounds)
+                        prediction = model_cardio.predict(processed_input)[0]
+                        probability = model_cardio.predict_proba(processed_input)[0][1]
 
-                    st.subheader("📊 Prediction Result")
-                    if prediction == 1:
-                        st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
-                    else:
-                        st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
-                except Exception as e:
-                    st.error(f"An error occurred during prediction: {e}")
+                        st.subheader("📊 Prediction Result")
+                        if prediction == 1:
+                            st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+                        else:
+                            st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+                    except Exception as e:
+                        st.error(f"An error occurred during prediction: {e}")
 
-elif selected == "Diabetes Risk":
-    st.title("🍬 Diabetes Risk Prediction")
-    st.markdown("Fill in the fields below to predict the risk of diabetes.")
+    elif selected == "Diabetes Risk":
+        st.title("🍬 Diabetes Risk Prediction")
+        st.markdown("Fill in the fields below to predict the risk of diabetes.")
 
-    with st.form("diabetes_input_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            age = st.number_input("Age (in years)", min_value=18, max_value=100, step=1, value=None)
-        with col2:
-            bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, step=0.1, value=None)
+        with st.form("diabetes_input_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                age = st.number_input("Age (in years)", min_value=18, max_value=100, step=1, value=None)
+            with col2:
+                bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, step=0.1, value=None)
 
-        col3, col4 = st.columns(2)
-        with col3:
-            high_bp = st.selectbox("High Blood Pressure", ["", "No", "Yes"])
-        with col4:
-            high_chol = st.selectbox("High Cholesterol", ["", "No", "Yes"])
+            col3, col4 = st.columns(2)
+            with col3:
+                high_bp = st.selectbox("High Blood Pressure", ["", "No", "Yes"])
+            with col4:
+                high_chol = st.selectbox("High Cholesterol", ["", "No", "Yes"])
 
-        col5, col6 = st.columns(2)
-        with col5:
-            smoker = st.selectbox("Smoker", ["", "No", "Yes"])
-        with col6:
-            phys_activity = st.selectbox("Physically Active", ["", "No", "Yes"])
+            col5, col6 = st.columns(2)
+            with col5:
+                smoker = st.selectbox("Smoker", ["", "No", "Yes"])
+            with col6:
+                phys_activity = st.selectbox("Physically Active", ["", "No", "Yes"])
 
-        submitted = st.form_submit_button("Predict")
+            submitted = st.form_submit_button("Predict")
 
-        if submitted:
-            if None in [age, bmi] or "" in [high_bp, high_chol, smoker, phys_activity]:
-                st.warning("⚠️ Please complete all fields before predicting.")
-            else:
-                high_bp_map = {"No": 0, "Yes": 1}
-                high_chol_map = {"No": 0, "Yes": 1}
-                smoker_map = {"No": 0, "Yes": 1}
-                phys_activity_map = {"No": 0, "Yes": 1}
+            if submitted:
+                if None in [age, bmi] or "" in [high_bp, high_chol, smoker, phys_activity]:
+                    st.warning("⚠️ Please complete all fields before predicting.")
+                else:
+                    high_bp_map = {"No": 0, "Yes": 1}
+                    high_chol_map = {"No": 0, "Yes": 1}
+                    smoker_map = {"No": 0, "Yes": 1}
+                    phys_activity_map = {"No": 0, "Yes": 1}
 
-                input_data = {
-                    'Age': age,
-                    'BMI': bmi,
-                    'HighBP': high_bp_map[high_bp],
-                    'HighChol': high_chol_map[high_chol],
-                    'Smoker': smoker_map[smoker],
-                    'PhysActivity': phys_activity_map[phys_activity]
-                }
+                    input_data = {
+                        'Age': age,
+                        'BMI': bmi,
+                        'HighBP': high_bp_map[high_bp],
+                        'HighChol': high_chol_map[high_chol],
+                        'Smoker': smoker_map[smoker],
+                        'PhysActivity': phys_activity_map[phys_activity]
+                    }
 
-                try:
-                    processed_input = preprocess_diabetes_input(input_data, clipping_bounds)
-                    prediction = model_diabetes.predict(processed_input)[0]
-                    probability = model_diabetes.predict_proba(processed_input)[0][1]
+                    try:
+                        processed_input = preprocess_diabetes_input(input_data, clipping_bounds)
+                        prediction = model_diabetes.predict(processed_input)[0]
+                        probability = model_diabetes.predict_proba(processed_input)[0][1]
 
-                    st.subheader("📊 Prediction Result")
-                    if prediction == 1:
-                        st.error(f"⚠️ High risk of diabetes.\nProbability: {probability * 100:.2f}%")
-                    else:
-                        st.success(f"✅ Low risk of diabetes.\nProbability: {probability * 100:.2f}%")
-                except Exception as e:
-                    st.error(f"An error occurred during prediction: {e}")
+                        st.subheader("📊 Prediction Result")
+                        if prediction == 1:
+                            st.error(f"⚠️ High risk of diabetes.\nProbability: {probability * 100:.2f}%")
+                        else:
+                            st.success(f"✅ Low risk of diabetes.\nProbability: {probability * 100:.2f}%")
+                    except Exception as e:
+                        st.error(f"An error occurred during prediction: {e}")
 
 st.markdown("---")
 st.caption("Powered by XGBoost, KModes & Streamlit for Cardiovascular and Diabetes Prediction")
