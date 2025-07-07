@@ -16,10 +16,10 @@ def load_models():
         model_diabetes = joblib.load("diabetes_final_model.pkl")  # Add diabetes model
         return model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes
     except FileNotFoundError as e:
-        st.error(f"Error loading models: {e}. Please ensure all model files (xgb_model.pkl, label_encoders.pkl, km_male.pkl, km_female.pkl, clipping_bounds.pkl, diabetes_final_model.pkl) are in the project directory.")
+        st.error(f"Error loading models: {e}. Please ensure all model files are in the project directory.")
         return None, None, None, None, None, None
     except Exception as e:
-        st.error(f"An unexpected error occurred while loading models: {e}")
+        st.error(f"An unexpected error occurred while loading models: {e}. Ensure all dependencies (e.g., pycaret) are installed.")
         return None, None, None, None, None, None
 
 # Preprocessing function for cardiovascular risk
@@ -124,7 +124,7 @@ model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_
 
 # Check if models loaded successfully
 if any(x is None for x in [model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes]):
-    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded.")
+    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded, and all dependencies (e.g., pycaret) are listed in requirements.txt.")
 else:
     # Main app logic with navigation
     if selected == "Cardiovascular Risk":
