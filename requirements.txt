@@ -1,9 +1,8 @@
 streamlit
-pandas
 numpy
+pandas
 joblib
-scikit-learn
+scikit-learn==1.3.2
 xgboost
 kmodes
 streamlit-option-menu
-pycaret==3.0.1
