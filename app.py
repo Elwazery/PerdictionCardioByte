@@ -13,13 +13,19 @@ def load_models():
         km_male = joblib.load("km_male.pkl")
         km_female = joblib.load("km_female.pkl")
         clipping_bounds = joblib.load("clipping_bounds.pkl")
-        model_diabetes = joblib.load("diabetes_final_model.pkl")  # Add diabetes model
+        model_diabetes = joblib.load("diabetes_final_model.pkl")
+        
+        # Test model compatibility
+        _ = model_cardio.predict(np.zeros((1, model_cardio.n_features_in_)))
+        _ = model_diabetes.predict(np.zeros((1, model_diabetes.n_features_in_)))
+        
+        st.sidebar.success("Models loaded successfully!")
         return model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes
     except FileNotFoundError as e:
         st.error(f"Error loading models: {e}. Please ensure all model files are in the project directory.")
         return None, None, None, None, None, None
     except Exception as e:
-        st.error(f"An unexpected error occurred while loading models: {e}. Ensure all dependencies (e.g., pycaret) are installed.")
+        st.error(f"An unexpected error occurred while loading models: {e}. Ensure pycaret==3.0.1 is installed and compatible.")
         return None, None, None, None, None, None
 
 # Preprocessing function for cardiovascular risk
@@ -45,13 +51,6 @@ def preprocess_manual_input(data, label_encoders, km_male, km_female, clipping_b
 
     for col in clipping_bounds:
         df[col] = df[col].clip(lower=clipping_bounds[col]['lower'], upper=clipping_bounds[col]['upper'])
-
-    df['bmi'] = df['weight'] / (df['height'] / 100) ** 2
-    df['MAP'] = (df['ap_hi'] + 2 * df['ap_lo']) / 3
-    df['BMI_Class'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 30, 100],
-                             labels=['Underweight', 'Normal', 'Overweight', 'Obese'], include_lowest=True)
-    df['MAP_Class'] = pd.cut(df['MAP'], bins=[0, 80, 100, 120, 1000],
-                             labels=['Low', 'Normal', 'High', 'Very High'], include_lowest=True)
 
     categorical_columns = ['gender', 'cholesterol', 'gluc', 'smoke', 'active',
                            'age_bin', 'BMI_Class', 'MAP_Class']
@@ -106,6 +105,16 @@ def preprocess_diabetes_input(data, clipping_bounds):
     features = ['Age', 'BMI', 'HighBP', 'HighChol', 'Smoker', 'PhysActivity', 'age_bin', 'BMI_Class']
     return df[features]
 
+# Function to get top 5 influential parameters
+def get_top_influences(model, processed_input, feature_names):
+    importances = model.feature_importances_
+    feature_importance = pd.DataFrame({'feature': feature_names, 'importance': importances})
+    feature_importance = feature_importance.sort_values('importance', ascending=False)
+    top_5 = feature_importance.head(5)
+    total_importance = top_5['importance'].sum()
+    top_5['contribution_percent'] = (top_5['importance'] / total_importance) * 100
+    return top_5
+
 # Streamlit App
 st.set_page_config(page_title="Health Risk Predictor", layout="centered")
 
@@ -124,7 +133,7 @@ model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_
 
 # Check if models loaded successfully
 if any(x is None for x in [model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes]):
-    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded, and all dependencies (e.g., pycaret) are listed in requirements.txt.")
+    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded, and pycaret==3.0.1 is installed.")
 else:
     # Main app logic with navigation
     if selected == "Cardiovascular Risk":
@@ -189,14 +198,30 @@ else:
 
                     try:
                         processed_input = preprocess_manual_input(input_data, label_encoders_cardio, km_male, km_female, clipping_bounds)
-                        prediction = model_cardio.predict(processed_input)[0]
-                        probability = model_cardio.predict_proba(processed_input)[0][1]
-
-                        st.subheader("📊 Prediction Result")
-                        if prediction == 1:
-                            st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+                        if processed_input.empty:
+                            st.error("Preprocessing failed. Please check the input data.")
                         else:
-                            st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability * 100:.2f}%")
+                            prediction = model_cardio.predict(processed_input)[0]
+                            probability = model_cardio.predict_proba(processed_input)[0][1] * 100
+
+                            st.subheader("📊 Prediction Result")
+                            if prediction == 1:
+                                st.error(f"⚠️ High risk of cardiovascular disease.\nProbability: {probability:.2f}%")
+                            else:
+                                st.success(f"✅ Low risk of cardiovascular disease.\nProbability: {probability:.2f}%")
+
+                            # Get top 5 influential parameters
+                            feature_names = ['years', 'gender', 'height', 'weight', 'ap_hi', 'ap_lo',
+                                             'cholesterol', 'gluc', 'smoke', 'active', 'bmi', 'MAP',
+                                             'age_bin', 'BMI_Class', 'MAP_Class', 'Cluster']
+                            top_influences = get_top_influences(model_cardio, processed_input, feature_names)
+                            st.subheader("🔍 Top 5 Influential Parameters")
+                            for _, row in top_influences.iterrows():
+                                contribution = (row['contribution_percent'] / 100) * probability
+                                st.write(f"{row['feature']}: {contribution:.2f}%")
+
+                    except ValueError as ve:
+                        st.error(f"Input dimensions mismatch: {ve}. Ensure input matches model features.")
                     except Exception as e:
                         st.error(f"An error occurred during prediction: {e}")
 
@@ -245,14 +270,28 @@ else:
 
                     try:
                         processed_input = preprocess_diabetes_input(input_data, clipping_bounds)
-                        prediction = model_diabetes.predict(processed_input)[0]
-                        probability = model_diabetes.predict_proba(processed_input)[0][1]
-
-                        st.subheader("📊 Prediction Result")
-                        if prediction == 1:
-                            st.error(f"⚠️ High risk of diabetes.\nProbability: {probability * 100:.2f}%")
+                        if processed_input.empty:
+                            st.error("Preprocessing failed. Please check the input data.")
                         else:
-                            st.success(f"✅ Low risk of diabetes.\nProbability: {probability * 100:.2f}%")
+                            prediction = model_diabetes.predict(processed_input)[0]
+                            probability = model_diabetes.predict_proba(processed_input)[0][1] * 100
+
+                            st.subheader("📊 Prediction Result")
+                            if prediction == 1:
+                                st.error(f"⚠️ High risk of diabetes.\nProbability: {probability:.2f}%")
+                            else:
+                                st.success(f"✅ Low risk of diabetes.\nProbability: {probability:.2f}%")
+
+                            # Get top 5 influential parameters
+                            feature_names = ['Age', 'BMI', 'HighBP', 'HighChol', 'Smoker', 'PhysActivity', 'age_bin', 'BMI_Class']
+                            top_influences = get_top_influences(model_diabetes, processed_input, feature_names)
+                            st.subheader("🔍 Top 5 Influential Parameters")
+                            for _, row in top_influences.iterrows():
+                                contribution = (row['contribution_percent'] / 100) * probability
+                                st.write(f"{row['feature']}: {contribution:.2f}%")
+
+                    except ValueError as ve:
+                        st.error(f"Input dimensions mismatch: {ve}. Ensure input matches model features.")
                     except Exception as e:
                         st.error(f"An error occurred during prediction: {e}")
 
