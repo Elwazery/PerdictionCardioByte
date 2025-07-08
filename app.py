@@ -17,7 +17,8 @@ def load_models():
         
         # Test model compatibility
         _ = model_cardio.predict(np.zeros((1, model_cardio.n_features_in_)))
-        _ = model_diabetes.predict(np.zeros((1, model_diabetes.n_features_in_)))
+        test_input = np.zeros((1, model_diabetes.n_features_in_))
+        _ = model_diabetes.predict(test_input)
         
         st.sidebar.success("Models loaded successfully!")
         return model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes
@@ -95,14 +96,42 @@ def preprocess_diabetes_input(data, clipping_bounds):
         elif bmi <= 49.9:
             rating.append(6)  # Obesity Class 3
         else:
-            rating.append('Error')
+            st.error("Invalid BMI value. BMI must be less than or equal to 49.9.")
+            return pd.DataFrame()
     df['BMI_Class'] = rating
 
     for col in clipping_bounds:
         if col in df.columns:
             df[col] = df[col].clip(lower=clipping_bounds[col]['lower'], upper=clipping_bounds[col]['upper'])
 
-    features = ['Age', 'BMI', 'HighBP', 'HighChol', 'Smoker', 'PhysActivity', 'age_bin', 'BMI_Class']
+    # Add missing features with default values (based on dataset)
+    missing_features = ['CholCheck', 'Stroke', 'HeartDiseaseorAttack', 'Fruits', 'Veggies',
+                        'HvyAlcoholConsump', 'AnyHealthcare', 'NoDocbcCost', 'GenHlth',
+                        'MentHlth', 'PhysHlth', 'DiffWalk', 'Sex', 'Education', 'Income']
+    default_values = {
+        'CholCheck': 1,  # Assume most have cholesterol checked
+        'Stroke': 0,  # Assume no stroke
+        'HeartDiseaseorAttack': 0,  # Assume no heart disease
+        'Fruits': 1,  # Assume fruit consumption
+        'Veggies': 1,  # Assume vegetable consumption
+        'HvyAlcoholConsump': 0,  # Assume no heavy alcohol consumption
+        'AnyHealthcare': 1,  # Assume healthcare access
+        'NoDocbcCost': 0,  # Assume no cost barrier
+        'GenHlth': 3,  # Assume average general health (median)
+        'MentHlth': 0,  # Assume no mental health issues
+        'PhysHlth': 0,  # Assume no physical health issues
+        'DiffWalk': 0,  # Assume no difficulty walking
+        'Sex': 0,  # Assume female (can be adjusted)
+        'Education': 4,  # Assume some college (median)
+        'Income': 6  # Assume average income (median)
+    }
+    for feature in missing_features:
+        df[feature] = default_values[feature]
+
+    features = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker', 'Stroke', 'HeartDiseaseorAttack',
+                'PhysActivity', 'Fruits', 'Veggies', 'HvyAlcoholConsump', 'AnyHealthcare',
+                'NoDocbcCost', 'GenHlth', 'MentHlth', 'PhysHlth', 'DiffWalk', 'Sex', 'Age',
+                'Education', 'Income', 'age_bin', 'BMI_Class']
     return df[features]
 
 # Function to get top 5 influential parameters
@@ -133,7 +162,7 @@ model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_
 
 # Check if models loaded successfully
 if any(x is None for x in [model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes]):
-    st.error("One or more models failed to load. Please check the error messages above and ensure all required model files are correctly uploaded.")
+    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded.")
 else:
     # Main app logic with navigation
     if selected == "Cardiovascular Risk":
@@ -234,7 +263,7 @@ else:
             with col1:
                 age = st.number_input("Age (in years)", min_value=18, max_value=100, step=1, value=None)
             with col2:
-                bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, step=0.1, value=None)
+                bmi = st.number_input("BMI", min_value=10.0, max_value=49.9, step=0.1, value=None)
 
             col3, col4 = st.columns(2)
             with col3:
@@ -283,7 +312,11 @@ else:
                                 st.success(f"✅ Low risk of diabetes.\nProbability: {probability:.2f}%")
 
                             # Get top 5 influential parameters
-                            feature_names = ['Age', 'BMI', 'HighBP', 'HighChol', 'Smoker', 'PhysActivity', 'age_bin', 'BMI_Class']
+                            feature_names = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker', 'Stroke',
+                                             'HeartDiseaseorAttack', 'PhysActivity', 'Fruits', 'Veggies',
+                                             'HvyAlcoholConsump', 'AnyHealthcare', 'NoDocbcCost', 'GenHlth',
+                                             'MentHlth', 'PhysHlth', 'DiffWalk', 'Sex', 'Age', 'Education',
+                                             'Income', 'age_bin', 'BMI_Class']
                             top_influences = get_top_influences(model_diabetes, processed_input, feature_names)
                             st.subheader("🔍 Top 5 Influential Parameters")
                             for _, row in top_influences.iterrows():
@@ -296,4 +329,4 @@ else:
                         st.error(f"An error occurred during prediction: {e}")
 
 st.markdown("---")
-st.caption("Powered by XGBoost, KModes & Streamlit for Cardiovascular and Diabetes Prediction")
+st.caption("Powered by XGBoost, KModes, CatBoost & Streamlit for Cardiovascular and Diabetes Prediction")
