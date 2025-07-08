@@ -6,4 +6,3 @@ scikit-learn==1.3.2
 xgboost
 kmodes
 streamlit-option-menu==0.3.12
-pycaret==3.0.1
