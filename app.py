@@ -25,7 +25,7 @@ def load_models():
         st.error(f"Error loading models: {e}. Please ensure all model files are in the project directory.")
         return None, None, None, None, None, None
     except Exception as e:
-        st.error(f"An unexpected error occurred while loading models: {e}. Ensure pycaret==3.0.1 is installed and compatible.")
+        st.error(f"An unexpected error occurred while loading models: {e}. Please ensure all model files are present and compatible.")
         return None, None, None, None, None, None
 
 # Preprocessing function for cardiovascular risk
