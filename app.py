@@ -133,7 +133,7 @@ model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_
 
 # Check if models loaded successfully
 if any(x is None for x in [model_cardio, label_encoders_cardio, km_male, km_female, clipping_bounds, model_diabetes]):
-    st.error("One or more models failed to load. Please check the error messages above and ensure all model files are correctly uploaded, and pycaret==3.0.1 is installed.")
+    st.error("One or more models failed to load. Please check the error messages above and ensure all required model files are correctly uploaded.")
 else:
     # Main app logic with navigation
     if selected == "Cardiovascular Risk":
