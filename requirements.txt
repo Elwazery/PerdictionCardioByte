@@ -7,3 +7,5 @@ xgboost==1.7.6
 kmodes==0.12.2
 streamlit-option-menu==0.3.12
 catboost==1.2
+spacy==3.5.0
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
